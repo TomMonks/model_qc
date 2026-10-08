@@ -22,3 +22,5 @@ dependencies:
   - scipy=1.18.1
   - seaborn=0.13.2
   - transformers=5.16.1
+  - pip:
+    - git+https://github.com/tommonks/xl-ray.git
