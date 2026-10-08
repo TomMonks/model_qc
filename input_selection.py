@@ -357,6 +357,16 @@ calculations. Examples include clinical inputs, costs, utilities,
 probabilities, treatment effects, mortality, resource use, discount
 rates, scenario settings, assumptions, calibration values and thresholds.
 
+Input sheets are commonly named: 
+
+* Parameters 
+* Inputs 
+* Assumptions 
+* Clinical 
+* Costs 
+* Utilities 
+* Settings 
+
 Intermediate calculations, formula-driven outputs, diagnostics, trace
 matrices and large reference datasets are not input parameters for this
 inventory. However, worksheets containing these may also contain genuine
@@ -392,7 +402,6 @@ Prioritise sampled cell contents, labels, named-range definitions and
 table headers over worksheet naming conventions.
 
 Do not:
-- select a worksheet solely because its name contains "inputs";
 - skip calculation, results or hidden worksheets automatically;
 - equate every non-formula value with a model input;
 - treat array-formula children as hardcoded inputs;
@@ -404,8 +413,6 @@ Do not:
 For each worksheet, return:
 - sheet: the exact worksheet identifier;
 - decision: "inspect", "review" or "skip";
-- likely_role: the best-supported role from the response schema,
-  using "unknown" when the evidence is insufficient;
 - reason: a short explanation of the decision;
 - evidence: concrete evidence from the payload;
 - uncertainty: any material uncertainty, or an empty string if none
