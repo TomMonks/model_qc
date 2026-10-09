@@ -151,7 +151,88 @@ def build_selection_payload(
     max_rows_per_sheet: int = 12,
     max_cells_per_row: int = 10,
 ) -> dict:
-    """Build a simple sampled workbook view for worksheet selection."""
+    """Build a sampled workbook summary for LLM worksheet selection.
+
+    Include every worksheet, with worksheet-level counts, sampled cell
+    contents, and table metadata, together with workbook-level named
+    ranges. The summary supplies evidence for selecting worksheets for
+    detailed input-parameter inspection; it does not identify inputs or
+    make worksheet-selection decisions.
+
+    Parameters
+    ----------
+    model : ExcelModelData
+        Parsed workbook containing file metadata, worksheets, cell data,
+        tables, and named ranges. Cell addresses must be local A1
+        references accepted by ``cell_position``, such as ``"B12"`` or
+        ``"$B$12"``.
+    max_rows_per_sheet : int, optional
+        Maximum number of populated rows to sample from each worksheet.
+        Rows are ordered by row number and sampled deterministically
+        across the ordered list. Must be at least 1. Default is 12.
+    max_cells_per_row : int, optional
+        Maximum number of retained cells to sample from each selected
+        row. Cells are ordered by column number and sampled
+        deterministically across the ordered list. Must be at least 1.
+        Default is 10.
+
+    Returns
+    -------
+    dict
+        Workbook summary with the following top-level keys:
+
+        ``file_name``
+            Workbook file name from ``model.metadata``.
+        ``worksheets``
+            List of worksheet summaries in the iteration order of
+            ``model.worksheets``. Each summary contains the worksheet
+            name and visibility, retained-cell count, formula-cell count,
+            populated-row count, sampled rows, and all table metadata.
+            Each sampled row contains its row number, total retained-cell
+            count, and sampled cell records. Cell records contain the
+            original address and the selected attributes ``value``,
+            ``formula``, ``is_array_formula``, and ``parent_array_cell``,
+            with attributes whose values are ``None`` omitted.
+        ``named_ranges``
+            All workbook named-range records, serialised using
+            ``model_dump(mode="json")``.
+        ``coverage``
+            Sampling metadata recording that cell contents are sampled
+            and specifying the requested row and cell limits.
+
+    Raises
+    ------
+    ValueError
+        If either sampling limit is less than 1, or a retained cell has
+        an address that is not a valid local A1 reference.
+
+    Notes
+    -----
+    A cell is retained if its value is not ``None``, it has a truthy
+    formula, it is marked as an array-formula member, or it has a truthy
+    parent-array reference. Array children are therefore retained even
+    when their cached values are absent.
+
+    Populated-cell and populated-row counts describe all retained cells
+    in each supplied worksheet, not only the sample. Formula-cell counts
+    include only cells with a truthy ``formula`` attribute; array children
+    without their own formulas do not contribute to that count.
+
+    Sampling uses positions in ordered lists of populated rows and
+    retained cells, rather than physical distances between Excel
+    coordinates. All items are included when they fit within the relevant
+    limit. Otherwise, a limit of 1 selects the middle item, and larger
+    limits select evenly spaced items including the first and last.
+
+    All worksheets are included regardless of visibility. Table metadata
+    and named ranges are included without sampling. Cell values and
+    formulas are not truncated, so the sampling limits do not impose a
+    fixed bound on the serialised payload size.
+
+    The sample may omit input parameters or separate labels from their
+    associated values. It must not be treated as exhaustive evidence that
+    a worksheet contains no model inputs.
+    """
     if max_rows_per_sheet < 1 or max_cells_per_row < 1:
         raise ValueError("Sampling limits must be at least 1.")
 
